@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f97316" />
+  <title>Order Cơm Gà 99</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-orange-50 min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="bg-white shadow p-4 flex flex-col sm:flex-row sm:justify-between sm:items-center">
+    <h1 class="text-2xl font-bold text-orange-700 text-center mb-3 sm:mb-0">🍗 Cơm Gà 99</h1>
+
+    <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+      <!-- Nhập số bàn -->
+      <div>
+        <label for="tableNumber" class="block text-sm font-semibold text-gray-700">Số bàn</label>
+        <input type="number" id="tableNumber" class="border border-gray-300 rounded px-3 py-2 w-full sm:w-24 text-center" placeholder="VD: 5" />
+      </div>
+
+      <!-- Chọn hình thức -->
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-1">Hình thức</label>
+        <div class="flex gap-4 justify-center sm:justify-start">
+          <label class="flex items-center text-sm">
+            <input type="radio" name="orderType" value="eat-in" class="mr-1" />
+            Tại chỗ
+          </label>
+          <label class="flex items-center text-sm">
+            <input type="radio" name="orderType" value="take-away" class="mr-1" />
+            Mang về
+          </label>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Nội dung -->
+  <main class="flex flex-col lg:flex-row flex-1 p-4 gap-6">
+
+    <!-- Menu -->
+    <div class="flex-1">
+      <!-- Tabs -->
+      <div class="flex flex-wrap justify-around mb-4 gap-2">
+        <button class="menu-btn bg-yellow-400 text-white px-4 py-2 rounded-lg font-semibold" data-category="comgaxoimo">Cơm gà xối mỡ</button>
+        <button class="menu-btn bg-gray-200 px-4 py-2 rounded-lg font-semibold" data-category="comchien">Cơm chiên</button>
+        <button class="menu-btn bg-gray-200 px-4 py-2 rounded-lg font-semibold" data-category="monthem">Món thêm</button>
+        <button class="menu-btn bg-gray-200 px-4 py-2 rounded-lg font-semibold" data-category="nuoc">Nước giải khát</button>
+      </div>
+
+      <!-- Danh sách món -->
+      <div id="menuItems" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+    </div>
+
+    <!-- Giỏ hàng -->
+    <aside class="w-full lg:w-1/3 bg-white rounded-xl shadow p-4 mt-4 lg:mt-0 lg:sticky lg:top-4">
+      <h2 class="text-lg sm:text-xl font-bold mb-3 text-orange-700">🧾 Đơn hàng</h2>
+      <div id="cart" class="text-gray-700 space-y-2 text-sm sm:text-base">
+        <p>Chưa có món nào</p>
+      </div>
+
+      <div class="mt-3 border-t pt-2">
+        <p id="total" class="font-bold text-right text-lg">Tổng cộng: 0 VND</p>
+      </div>
+
+      <div class="mt-4 flex justify-between gap-2">
+        <button class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded w-1/2" onclick="clearCart()">Hủy</button>
+        <button class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded w-1/2" onclick="sendOrderToGoogle()">Gửi đơn</button>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    // Dữ liệu menu
+    const menuData = {
+      comgaxoimo: [
+        { name: "Cơm gà góc tư", price: 50000 },
+        { name: "Cơm gà đùi tỏi", price: 38000 },
+        { name: "Cơm gà má đùi", price: 38000 }
+      ],
+      comchien: [
+        { name: "Cơm chiên da gà ốp la", price: 30000 },
+        { name: "Cơm chiên xá xíu", price: 38000 },
+        { name: "Cơm chiên dương châu", price: 38000 },
+        { name: "Cơm chiên da gà", price: 18000 }
+      ],
+      monthem: [
+        { name: "Canh rong biển", price: 10000 },
+        { name: "Trứng ốp la", price: 7000 },
+        { name: "Cơm thêm", price: 5000 },
+        { name: "Da gà thêm", price: 10000 },
+        { name: "Đùi tỏi thêm", price: 30000 },
+        { name: "Má đùi thêm", price: 30000 },
+        { name: "Góc tư thêm", price: 42000 },
+        { name: "Xá xíu thêm", price: 30000 }
+      ],
+      nuoc: [
+        { name: "Pepsi", price: 12000 },
+        { name: "Olong Tea", price: 15000 },
+        { name: "Sting", price: 15000 },
+        { name: "Cà phê đen", price: 12000 },
+        { name: "Cà phê sữa", price: 15000 }
+      ]
+    };
+
+    let currentCategory = "comgaxoimo";
+    let cart = [];
+
+    // Hiển thị menu
+    function renderMenu(category) {
+      const menuDiv = document.getElementById("menuItems");
+      menuDiv.innerHTML = "";
+      menuData[category].forEach((item, i) => {
+        const div = document.createElement("div");
+        div.className = "bg-white rounded-lg p-4 shadow flex flex-col items-center";
+        div.innerHTML = `
+          <h3 class="font-semibold text-center">${item.name}</h3>
+          <p class="text-sm text-gray-600 mb-2">${item.price.toLocaleString()} VND</p>
+          <input type="number" id="qty-${i}" min="1" value="1" class="border rounded w-16 text-center mb-2">
+          <textarea id="note-${i}" rows="1" placeholder="Ghi chú (tùy chọn)" class="border border-gray-300 rounded px-2 py-1 w-full text-sm mb-2"></textarea>
+          <button class="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded w-full sm:w-auto" onclick="addToCart('${item.name}', ${item.price}, ${i})">+ Thêm</button>
+        `;
+        menuDiv.appendChild(div);
+      });
+    }
+    renderMenu(currentCategory);
+
+    document.querySelectorAll(".menu-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".menu-btn").forEach(b => {
+          b.classList.remove("bg-yellow-400", "text-white");
+          b.classList.add("bg-gray-200", "text-black");
+        });
+        btn.classList.add("bg-yellow-400", "text-white");
+        btn.classList.remove("bg-gray-200", "text-black");
+        currentCategory = btn.dataset.category;
+        renderMenu(currentCategory);
+      });
+    });
+
+    function getOrderType() {
+      const selected = document.querySelector('input[name="orderType"]:checked');
+      return selected ? selected.value : null;
+    }
+
+    function addToCart(name, price, i) {
+      const table = document.getElementById("tableNumber").value.trim();
+      const type = getOrderType();
+      if (!table) return alert("⚠️ Vui lòng nhập số bàn!");
+      if (!type) return alert("⚠️ Vui lòng chọn hình thức!");
+      const qty = parseInt(document.getElementById(`qty-${i}`).value) || 1;
+      const note = document.getElementById(`note-${i}`).value.trim();
+      cart.push({ name, price, qty, note, table, type });
+      updateCart();
+    }
+
+    function updateCart() {
+      const cartDiv = document.getElementById("cart");
+      cartDiv.innerHTML = "";
+      if (!cart.length) {
+        cartDiv.innerHTML = "<p>Chưa có món nào</p>";
+        document.getElementById("total").textContent = "Tổng cộng: 0 VND";
+        return;
+      }
+      const { table, type } = cart[0];
+      const statusText = type === "eat-in" ? "Tại chỗ" : "Mang về";
+      cartDiv.innerHTML += `<p><b>Bàn:</b> ${table}</p><p><b>Hình thức:</b> ${statusText}</p>`;
+      let total = 0;
+      cart.forEach(c => {
+        cartDiv.innerHTML += `
+          <div class="border-b py-1">
+            <div class="flex justify-between">
+              <span>${c.name} x${c.qty}</span>
+              <span>${(c.price * c.qty).toLocaleString()} VND</span>
+            </div>
+            ${c.note ? `<p class="text-xs text-gray-500 italic">Ghi chú: ${c.note}</p>` : ""}
+          </div>
+        `;
+        total += c.price * c.qty;
+      });
+      document.getElementById("total").textContent = `Tổng cộng: ${total.toLocaleString()} VND`;
+    }
+
+    function clearCart() {
+      if (confirm("🧹 Xóa toàn bộ đơn hàng này?")) {
+        cart = [];
+        updateCart();
+      }
+    }
+
+    function sendOrderToGoogle() {
+      const link = "https://script.google.com/macros/s/AKfycbxH9ATrE-zEivDSH6xAWl1Xfu1pw3sta_bTQ3jiuAwLrQVEYKj82cciYcnTXiWpUM5XeA/exec"; // link Apps Script của bạn
+
+      const table = document.getElementById("tableNumber").value;
+      const type = getOrderType();
+      if (!table || !type) return alert("⚠️ Nhập số bàn & hình thức!");
+
+      if (!cart.length) return alert("⚠️ Giỏ hàng trống!");
+
+      const mon = cart.map(c => `${c.name} x${c.qty}${c.note ? " (" + c.note + ")" : ""}`).join(", ");
+      const tongtien = cart.reduce((sum, c) => sum + c.price * c.qty, 0);
+
+      const order = {
+        ban: table,
+        hinhthuc: type === "eat-in" ? "Tại chỗ" : "Mang về",
+        mon: mon,
+        tongtien: tongtien,
+        thoigian: new Date().toLocaleString()
+      };
+
+      fetch(link, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(order)
+      })
+      .then(res => res.text())
+      .then(data => {
+        alert("✅ Đã gửi đơn hàng lên Google Sheet!");
+        cart = [];
+        updateCart();
+      })
+      .catch(err => alert("❌ Lỗi gửi đơn: " + err));
+    }
+  </script>
+</body>
+</html>
